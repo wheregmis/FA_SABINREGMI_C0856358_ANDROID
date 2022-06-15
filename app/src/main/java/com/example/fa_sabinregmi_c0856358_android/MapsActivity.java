@@ -1,13 +1,26 @@
 package com.example.fa_sabinregmi_c0856358_android;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -17,6 +30,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.fa_sabinregmi_c0856358_android.databinding.ActivityMapsBinding;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -29,6 +44,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     MaterialButton btnHybrid;
     MaterialButton btnTerrian;
     MaterialButton btnNone;
+
+    LocationRequest mLocationRequest;
+    private FusedLocationProviderClient fusedLocationClient;
+
+    private double latitude, longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,14 +79,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.clear();
+        checkPermissionAndEnableLocation();
+    }
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    @SuppressLint("MissingPermission")
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public void checkPermissionAndEnableLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            //TODO
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        startLocationUpdates();
     }
 
     private void initialize() {
@@ -80,5 +110,52 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnHybrid.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID));
         btnTerrian.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN));
         btnNone.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        checkPermissionAndEnableLocation();
+    }
+
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+
+        // Create the location request
+        mLocationRequest = LocationRequest.create()
+                .setInterval(2000)
+                .setFastestInterval(2000);
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getApplicationContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            return;
+        }
+        final LocationCallback mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+
+            }
+        };
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+        fusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (fusedLocationClient != null) {
+                        if (location != null) {
+                            mMap.setOnMapLoadedCallback(() -> {
+
+                                latitude = location.getLatitude();
+                                longitude = location.getLongitude();
+                                fusedLocationClient.removeLocationUpdates(mLocationCallback);
+                            });
+
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
+
     }
 }
