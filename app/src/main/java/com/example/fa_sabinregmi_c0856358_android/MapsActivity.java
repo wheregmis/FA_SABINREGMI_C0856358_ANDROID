@@ -1,7 +1,11 @@
 package com.example.fa_sabinregmi_c0856358_android;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentActivity;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -11,11 +15,20 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.fa_sabinregmi_c0856358_android.databinding.ActivityMapsBinding;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+
+    FloatingActionButton fabAdd;
+
+    MaterialButton btnSatelite;
+    MaterialButton btnHybrid;
+    MaterialButton btnTerrian;
+    MaterialButton btnNone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,10 +37,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        initialize();
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setTitle("Map View");
+        toolbar.setTitleTextColor(Color.WHITE);
+        setSupportActionBar(toolbar);
     }
 
     /**
@@ -47,5 +67,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+    private void initialize() {
+        fabAdd = findViewById(R.id.float_add);
+        btnSatelite = findViewById(R.id.button_satelite);
+        btnHybrid = findViewById(R.id.button_hybrid);
+        btnTerrian = findViewById(R.id.button_terrain);
+        btnNone = findViewById(R.id.button_none);
+
+        btnSatelite.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE));
+        btnHybrid.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID));
+        btnTerrian.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN));
+        btnNone.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL));
     }
 }
