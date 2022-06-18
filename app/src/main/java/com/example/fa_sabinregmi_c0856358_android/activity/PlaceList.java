@@ -56,7 +56,7 @@ public class PlaceList extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view_list);
         listAdapter = new ListAdapter(this, placeList);
 
-        placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabaseDatabase().placeDao();
+        placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setAdapter(listAdapter);

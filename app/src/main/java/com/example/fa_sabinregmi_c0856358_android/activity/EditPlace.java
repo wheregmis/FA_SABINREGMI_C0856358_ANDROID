@@ -1,6 +1,5 @@
 package com.example.fa_sabinregmi_c0856358_android.activity;
 
-
 import android.os.Bundle;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -20,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 
@@ -29,6 +29,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
     EditText etName;
     MaterialButton btnAdd;
 
+    Marker placeMarker;
     CheckBox cvFav;
     CheckBox cvComp;
 
@@ -45,12 +46,12 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
 
         place = placeDao.getProductById(getIntent().getIntExtra("id", 0));
-        inititalize();
+        initialize();
     }
 
     void initializeToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitle("Add Place");
+        toolbar.setTitle(place.getName());
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -63,7 +64,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         return true;
     }
 
-    void inititalize() {
+    void initialize() {
         initializeToolbar();
 
         etName = findViewById(R.id.edit_name);
@@ -71,7 +72,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         cvFav = findViewById(R.id.cv_isFav);
         cvComp = findViewById(R.id.cv_isCompleted);
 
-        btnAdd.setText("Edit Location");
+        btnAdd.setText("Update Location");
 
         etName.setText(place.getName());
         cvFav.setChecked(place.getFav());
@@ -124,12 +125,12 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(place.getLatitude(), place.getLongitude());
+        LatLng placeLatLng = new LatLng(place.getLatitude(), place.getLongitude());
         mMap.addMarker(new MarkerOptions()
-                .position(sydney)
-                .title("Current Location")).setDraggable(true);
+                .position(placeLatLng)
+                .title(place.getName())).setDraggable(true);
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 12));
 
         mMap.setOnMapClickListener(latLng -> {
             googleMap.clear();
@@ -138,7 +139,30 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
             place.setLongitude((float) current1.longitude);
             googleMap.addMarker(new MarkerOptions()
                     .position(current1)
-                    .title("Current Location")).setDraggable(true);
+                    .title(place.getName())).setDraggable(true);
+        });
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                googleMap.clear();
+                LatLng current1 = new LatLng(marker.getPosition().latitude, marker.getPosition().latitude);
+                place.setLatitude((float) current1.latitude);
+                place.setLongitude((float) current1.longitude);
+                googleMap.addMarker(new MarkerOptions()
+                        .position(current1)
+                        .title(place.getName())).setDraggable(true);
+            }
+
+            @Override
+            public void onMarkerDrag(Marker marker) {
+
+            }
         });
     }
 }

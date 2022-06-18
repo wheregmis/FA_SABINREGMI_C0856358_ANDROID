@@ -12,7 +12,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import com.example.fa_sabinregmi_c0856358_android.R;
 import com.example.fa_sabinregmi_c0856358_android.activity.EditPlace;
 import com.example.fa_sabinregmi_c0856358_android.database.DatabaseClient;

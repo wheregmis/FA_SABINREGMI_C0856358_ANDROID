@@ -46,6 +46,8 @@
             android:screenOrientation="portrait"/>
         <activity android:name=".activity.PlaceList"
             android:screenOrientation="portrait"/>
+        <activity android:name=".activity.EditPlace"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
