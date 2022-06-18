@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.example.fa_sabinregmi_c0856358_android.activity.AddNewPlace;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -105,6 +106,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnHybrid = findViewById(R.id.button_hybrid);
         btnTerrian = findViewById(R.id.button_terrain);
         btnNone = findViewById(R.id.button_none);
+
+        fabAdd.setOnClickListener(view -> startActivity(new Intent(getApplicationContext(), AddNewPlace.class)));
 
         btnSatelite.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE));
         btnHybrid.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID));

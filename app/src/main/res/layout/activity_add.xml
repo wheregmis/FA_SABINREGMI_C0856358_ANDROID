@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activity.AddNewPlace">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize" />
+
+    <TextView
+        android:id="@+id/text_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:padding="5dp"
+        android:text="Name"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/edit_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_name"
+        android:layout_margin="5dp"
+        android:layout_marginTop="8dp"
+        android:background="#f1f1f1"
+        android:padding="10dp" />
+
+    <CheckBox
+        android:id="@+id/cv_isFav"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/edit_name"
+        android:layout_height="wrap_content"
+        android:text="Favorite" />
+
+    <CheckBox
+        android:id="@+id/cv_isCompleted"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/cv_isFav"
+        android:layout_height="wrap_content"
+        android:text="Visited" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/button_add"
+        android:layout_below="@id/cv_isCompleted"
+        android:layout_marginTop="8dp"
+        tools:context=".MapsActivity" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:textAllCaps="false"
+        android:insetBottom="0dp"
+        android:insetTop="0dp"
+        android:layout_alignParentBottom="true"
+        android:text="Add" />
+
+</RelativeLayout>
