@@ -1,12 +1,5 @@
 package com.example.fa_sabinregmi_c0856358_android;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -14,32 +7,33 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 
 import com.example.fa_sabinregmi_c0856358_android.activity.AddNewPlace;
+import com.example.fa_sabinregmi_c0856358_android.activity.PlaceList;
+import com.example.fa_sabinregmi_c0856358_android.databinding.ActivityMapsBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.fa_sabinregmi_c0856358_android.databinding.ActivityMapsBinding;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
 
-    FloatingActionButton fabAdd;
+    FloatingActionButton fabAdd, fabList;
 
     MaterialButton btnSatelite;
     MaterialButton btnHybrid;
@@ -102,12 +96,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void initialize() {
         fabAdd = findViewById(R.id.float_add);
+        fabList = findViewById(R.id.fabList);
         btnSatelite = findViewById(R.id.button_satelite);
         btnHybrid = findViewById(R.id.button_hybrid);
         btnTerrian = findViewById(R.id.button_terrain);
         btnNone = findViewById(R.id.button_none);
 
         fabAdd.setOnClickListener(view -> startActivity(new Intent(getApplicationContext(), AddNewPlace.class)));
+        fabList.setOnClickListener(view -> startActivity(new Intent(getApplicationContext(), PlaceList.class)));
 
         btnSatelite.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE));
         btnHybrid.setOnClickListener(view -> mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID));

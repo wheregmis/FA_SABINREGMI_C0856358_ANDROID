@@ -21,7 +21,7 @@ import com.example.fa_sabinregmi_c0856358_android.util.SwipeToDeleteCallback;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaceListActivity extends AppCompatActivity {
+public class PlaceList extends AppCompatActivity {
     RecyclerView recyclerView;
     ListAdapter listAdapter;
 

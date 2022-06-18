@@ -74,10 +74,23 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_above="@id/linear_button"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:contentDescription="Todo"
         android:src="@drawable/ic_baseline_add_24"
-        map:tint="@color/white" />
+        map:backgroundTint="@android:color/white"
+        map:useCompatPadding="true"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_above="@id/linear_button"
+        android:layout_margin="10dp"
+        android:contentDescription="Todo"
+        android:src="@drawable/ic_baseline_list_24"
+        map:backgroundTint="@android:color/white"
+        map:useCompatPadding="true"/>
 
 
 </RelativeLayout>
