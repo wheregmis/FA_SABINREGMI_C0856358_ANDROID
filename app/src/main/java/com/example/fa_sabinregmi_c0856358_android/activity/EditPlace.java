@@ -2,8 +2,13 @@ package com.example.fa_sabinregmi_c0856358_android.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,15 +35,22 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.button.MaterialButton;
 
+import java.text.DecimalFormat;
 import java.util.Calendar;
+import java.util.List;
 
 public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
+    // defining variables
     EditText etName;
     MaterialButton btnAdd;
 
@@ -47,6 +59,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap = null;
 
+    // initializing Place Model
     Place place = null;
     private PlaceDao placeDao;
 
@@ -58,12 +71,14 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
 
+        // getting place model from database when id was placed
         placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
 
         place = placeDao.getProductById(getIntent().getIntExtra("id", 0));
         initialize();
     }
 
+    // method to initialize toolbar
     void initializeToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle(place.getName());
@@ -91,8 +106,10 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     void initialize() {
+        // initializing toolbar
         initializeToolbar();
 
+        // binding components with variables
         etName = findViewById(R.id.edit_name);
         btnAdd = findViewById(R.id.button_add);
         cvFav = findViewById(R.id.cv_isFav);
@@ -104,13 +121,18 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         cvFav.setChecked(place.getFav());
         cvComp.setChecked(place.getVisited());
 
+        // setting up map
         setUpMap();
 
+        // setting up click listener to add button
         btnAdd.setOnClickListener(view -> {
+
             if (!etName.getText().toString().contentEquals("")) {
 
+                // getting place dao
                 PlaceDao placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
 
+                // checking lat long if its null or not
                 if (place.getLatitude() != null && place.getLatitude() != null) {
                     place.setDate(String.valueOf(Calendar.getInstance().getTime()));
                     place.setName(etName.getText().toString());
@@ -126,7 +148,10 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
                     } else {
                         place.setFav(false);
                     }
+                    // updating place in database
                     placeDao.update(place);
+
+
 
                     Toast.makeText(this, "Place has been added", Toast.LENGTH_SHORT).show();
                     finish();
@@ -139,6 +164,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         });
     }
 
+    // method to set up map fragment
     void setUpMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -160,6 +186,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 11));
 
+        // setting up click listener to place marker in mapview
         mMap.setOnMapClickListener(latLng -> {
             googleMap.clear();
             LatLng current1 = new LatLng(latLng.latitude, latLng.longitude);
@@ -192,8 +219,10 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
             }
         });
+
     }
 
+    // method to handle permission and update user location
     @SuppressLint("MissingPermission")
     protected void startLocationUpdates() {
 
@@ -225,6 +254,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
                                 checkPermissionAndEnableLocation();
                                 LatLng source = new LatLng(location.getLatitude(), location.getLongitude());
                                 drawLine(source, new LatLng(place.getLatitude(), place.getLongitude()));
+
                                 fusedLocationClient.removeLocationUpdates(mLocationCallback);
                             });
 
@@ -235,6 +265,7 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
     }
 
+    // method to draw line between place location and user location
     private void drawLine(LatLng source, LatLng destination) {
         PolylineOptions options1 = new PolylineOptions()
                 .color(Color.BLUE)
@@ -242,8 +273,61 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
                 .add(source, destination);
         options1.clickable(true);
         options1.zIndex(2F);
-        mMap.addPolyline(options1);
+        Polyline p = mMap.addPolyline(options1);
+        List<LatLng> test = p.getPoints();
+        float[] results = new float[1];
+        Location.distanceBetween(test.get(0).latitude, test.get(0).longitude,
+                test.get(1).latitude, test.get(1).longitude,
+                results);
+
+        // calculate midpoint of polyline
+        LatLng centerLatLng = null;
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for(int i = 0 ; i < p.getPoints().size() ; i++)
+        {
+            builder.include(p.getPoints().get(i));
+        }
+        LatLngBounds bounds = builder.build();
+        centerLatLng =  bounds.getCenter();
+
+        setMarkerInCoordinate(centerLatLng, results[0]);
 
 
+    }
+
+    // method to set marker in the co ordinate
+    private void setMarkerInCoordinate(LatLng latLng, Float distance){
+        Log.i("MapsActivity", "setMarkerInCoordinate: "+latLng);
+        DecimalFormat df = new DecimalFormat("#.##");
+        MarkerOptions options = new MarkerOptions().position(latLng)
+                .title("")
+                .icon(createPureTextIcon(String.valueOf(df.format(distance/1000))+" KM"));
+        mMap.addMarker(options);
+    }
+
+    // method to create icon from string
+    public BitmapDescriptor createPureTextIcon(String text) {
+
+        Paint textPaint = new Paint(); // Adapt to your needs
+        textPaint.setTextSize(50);
+        float textWidth = textPaint.measureText(text);
+        float textHeight = textPaint.getTextSize();
+        int width = (int) (textWidth);
+        int height = (int) (textHeight);
+
+        Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+
+        canvas.translate(0, height);
+
+        // For development only:
+        // Set a background in order to see the
+        // full size and positioning of the bitmap.
+        // Remove that for a fully transparent icon.
+        canvas.drawColor(Color.LTGRAY);
+
+        canvas.drawText(text, 0, 0, textPaint);
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(image);
+        return icon;
     }
 }

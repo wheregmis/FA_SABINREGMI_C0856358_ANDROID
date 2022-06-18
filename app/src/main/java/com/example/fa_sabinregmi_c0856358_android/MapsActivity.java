@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -17,14 +19,17 @@ import androidx.core.app.ActivityCompat;
 import com.example.fa_sabinregmi_c0856358_android.activity.AddNewPlace;
 import com.example.fa_sabinregmi_c0856358_android.activity.PlaceList;
 import com.example.fa_sabinregmi_c0856358_android.databinding.ActivityMapsBinding;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -80,6 +85,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         mMap.clear();
         checkPermissionAndEnableLocation();
+
+        mMap.setOnMapLongClickListener(latLng -> {
+            Toast.makeText(MapsActivity.this, "Add Location to list", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(getApplicationContext(), AddNewPlace.class);
+            intent.putExtra("long", latLng.longitude);
+            intent.putExtra("lan", latLng.latitude);
+            startActivity(intent);
+        });
     }
 
     @SuppressLint("MissingPermission")
@@ -148,6 +161,66 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                                 latitude = location.getLatitude();
                                 longitude = location.getLongitude();
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 11));
+
+//
+//                                // Create a new token for the autocomplete session. Pass this to FindAutocompletePredictionsRequest,
+//                                // and once again when the user makes a selection (for example when calling fetchPlace()).
+//                                AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
+//
+//                                // Create a RectangularBounds object.
+//                                RectangularBounds bounds = RectangularBounds.newInstance(
+//                                        new LatLng(-33.880490, 151.184363),
+//                                        new LatLng(-33.858754, 151.229596));
+//                                // Use the builder to create a FindAutocompletePredictionsRequest.
+//                                FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
+//                                        // Call either setLocationBias() OR setLocationRestriction().
+//                                        .setLocationBias(bounds)
+//                                        //.setLocationRestriction(bounds)
+//                                        .setOrigin(new LatLng(-33.8749937,151.2041382))
+//                                        .setCountries("AU", "NZ")
+//                                        .setTypeFilter(TypeFilter.ADDRESS)
+//                                        .setSessionToken(token)
+//                                        .build();
+//
+//                                PlacesClient placesClient = new PlacesClient() {
+//                                    @NonNull
+//                                    @Override
+//                                    public Task<FindAutocompletePredictionsResponse> findAutocompletePredictions(@NonNull FindAutocompletePredictionsRequest findAutocompletePredictionsRequest) {
+//                                        return null;
+//                                    }
+//
+//                                    @NonNull
+//                                    @Override
+//                                    public Task<FetchPhotoResponse> fetchPhoto(@NonNull FetchPhotoRequest fetchPhotoRequest) {
+//                                        return null;
+//                                    }
+//
+//                                    @NonNull
+//                                    @Override
+//                                    public Task<FetchPlaceResponse> fetchPlace(@NonNull FetchPlaceRequest fetchPlaceRequest) {
+//                                        return null;
+//                                    }
+//
+//                                    @NonNull
+//                                    @Override
+//                                    public Task<FindCurrentPlaceResponse> findCurrentPlace(@NonNull FindCurrentPlaceRequest findCurrentPlaceRequest) {
+//                                        return null;
+//                                    }
+//                                };
+//                                placesClient.findAutocompletePredictions(request).addOnSuccessListener((response) -> {
+//                                    for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
+//                                        Log.i("PlacesAPI", prediction.getPlaceId());
+//                                        Log.i("PlacesAPI", prediction.getPrimaryText(null).toString());
+//                                    }
+//                                }).addOnFailureListener((exception) -> {
+//                                    if (exception instanceof ApiException) {
+//                                        ApiException apiException = (ApiException) exception;
+//                                        Log.e("PlacesAPI", "Place not found: " + apiException.getStatusCode());
+//                                    }
+//                                });
+
+
                                 fusedLocationClient.removeLocationUpdates(mLocationCallback);
                             });
 

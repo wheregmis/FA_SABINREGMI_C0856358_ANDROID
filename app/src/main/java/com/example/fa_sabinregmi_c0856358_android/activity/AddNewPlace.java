@@ -37,6 +37,8 @@ import com.google.android.material.button.MaterialButton;
 import java.util.Calendar;
 
 public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback {
+
+    // defining variables
     EditText etName;
     MaterialButton btnAdd;
 
@@ -45,6 +47,7 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap = null;
 
+    // initializing Place Model
     Place place = new Place();
 
     @Override
@@ -52,9 +55,11 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
 
-        inititalize();
+        //calling initialize method to initialize layout components
+        initialize();
     }
 
+    // method to initialize toolbar
     void initializeToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle("Add Place");
@@ -70,26 +75,36 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         return true;
     }
 
-    void inititalize() {
+    void initialize() {
+
+        // initializing toolbar
         initializeToolbar();
 
+        // binding components with variables
         etName = findViewById(R.id.edit_name);
         btnAdd = findViewById(R.id.button_add);
         cvFav = findViewById(R.id.cv_isFav);
         cvComp = findViewById(R.id.cv_isCompleted);
 
+        // setting up map
         setUpMap();
 
+        // setting up click listener to add button
         btnAdd.setOnClickListener(view -> {
             if (!etName.getText().toString().contentEquals("")) {
 
+                // getting place dao
                 PlaceDao placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
+
+                // validating place name
                 for (Place place1 : placeDao.getAllPlaces()) {
                     if (place1.getName().contentEquals(etName.getText().toString())) {
                         Toast.makeText(this, "Cannot use the same name", Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
+
+                // checking lat long if its null or not
                 if (place.getLatitude() != null && place.getLatitude() != null) {
                     place.setDate(String.valueOf(Calendar.getInstance().getTime()));
                     place.setName(etName.getText().toString());
@@ -106,7 +121,7 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
                         place.setFav(false);
                     }
 
-
+                    // inserting place in database
                     placeDao.insert(place);
 
                     Toast.makeText(this, "Place has been added", Toast.LENGTH_SHORT).show();
@@ -120,6 +135,7 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
+    // method to set up map fragment
     void setUpMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -133,25 +149,26 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         mMap.clear();
         enableLocation();
 
+        // if intent have values (opened from long press on map)
         if (getIntent() != null) {
-            // Add a marker in Sydney and move the camera
-            LatLng sydney = new LatLng(getIntent().getDoubleExtra("lan", -34), getIntent().getDoubleExtra("long", -151));
+            LatLng selectedLatLng = new LatLng(getIntent().getDoubleExtra("lan", -34), getIntent().getDoubleExtra("long", -151));
             mMap.addMarker(new MarkerOptions()
-                    .position(sydney)
-                    .title("Current Location")).setDraggable(true);
+                    .position(selectedLatLng)
+                    .title("Selected Location")).setDraggable(true);
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLatLng, 12));
         } else {
-            // Add a marker in Sydney and move the camera
-            LatLng sydney = new LatLng(-34, 151);
+            // if intent doesnt have value
+            LatLng selectedLatLng = new LatLng(-34, 151);
             mMap.addMarker(new MarkerOptions()
-                    .position(sydney)
-                    .title("Current Location")).setDraggable(true);
+                    .position(selectedLatLng)
+                    .title("Selected Location")).setDraggable(true);
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 12));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLatLng, 12));
         }
 
 
+        // setting up click listener to place marker in mapview
         mMap.setOnMapClickListener(latLng -> {
             googleMap.clear();
             LatLng current1 = new LatLng(latLng.latitude, latLng.longitude);
@@ -159,7 +176,7 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
             place.setLongitude((float) current1.longitude);
             googleMap.addMarker(new MarkerOptions()
                     .position(current1)
-                    .title("Current Location"));
+                    .title("Selected Location"));
         });
     }
 
@@ -180,6 +197,8 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
     LocationRequest mLocationRequest;
     private double latitude, longitude;
 
+
+    // method to handle permission and update user location
     @SuppressLint("MissingPermission")
     protected void startLocationUpdates() {
 
