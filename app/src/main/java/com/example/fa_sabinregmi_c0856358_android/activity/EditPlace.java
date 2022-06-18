@@ -1,6 +1,12 @@
 package com.example.fa_sabinregmi_c0856358_android.activity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -9,11 +15,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 
 import com.example.fa_sabinregmi_c0856358_android.R;
 import com.example.fa_sabinregmi_c0856358_android.database.DatabaseClient;
 import com.example.fa_sabinregmi_c0856358_android.database.PlaceDao;
 import com.example.fa_sabinregmi_c0856358_android.model.Place;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -21,6 +33,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.Calendar;
@@ -29,7 +42,6 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
     EditText etName;
     MaterialButton btnAdd;
 
-    Marker placeMarker;
     CheckBox cvFav;
     CheckBox cvComp;
 
@@ -37,6 +49,9 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
     Place place = null;
     private PlaceDao placeDao;
+
+    LocationRequest mLocationRequest;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +71,17 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @SuppressLint("MissingPermission")
+    public void checkPermissionAndEnableLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            //TODO
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        startLocationUpdates();
     }
 
     @Override
@@ -118,19 +144,21 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
+        checkPermissionAndEnableLocation();
+
         LatLng placeLatLng = new LatLng(place.getLatitude(), place.getLongitude());
         mMap.addMarker(new MarkerOptions()
                 .position(placeLatLng)
                 .title(place.getName())).setDraggable(true);
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 12));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 11));
 
         mMap.setOnMapClickListener(latLng -> {
             googleMap.clear();
@@ -164,5 +192,58 @@ public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
 
             }
         });
+    }
+
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+
+        // Create the location request
+        mLocationRequest = LocationRequest.create()
+                .setInterval(2000)
+                .setFastestInterval(2000);
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getApplicationContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            return;
+        }
+        final LocationCallback mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+
+            }
+        };
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+        fusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (fusedLocationClient != null) {
+                        if (location != null) {
+                            mMap.setOnMapLoadedCallback(() -> {
+                                checkPermissionAndEnableLocation();
+                                LatLng source = new LatLng(location.getLatitude(), location.getLongitude());
+                                drawLine(source, new LatLng(place.getLatitude(), place.getLongitude()));
+                                fusedLocationClient.removeLocationUpdates(mLocationCallback);
+                            });
+
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
+
+    }
+
+    private void drawLine(LatLng source, LatLng destination) {
+        PolylineOptions options1 = new PolylineOptions()
+                .color(Color.BLUE)
+                .width(10)
+                .add(source, destination);
+        options1.clickable(true);
+        options1.zIndex(2F);
+        mMap.addPolyline(options1);
+
+
     }
 }
