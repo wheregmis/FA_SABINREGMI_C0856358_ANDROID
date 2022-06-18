@@ -83,7 +83,7 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         btnAdd.setOnClickListener(view -> {
             if (!etName.getText().toString().contentEquals("")) {
 
-                PlaceDao placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabaseDatabase().placeDao();
+                PlaceDao placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
                 for (Place place1 : placeDao.getAllPlaces()) {
                     if (place1.getName().contentEquals(etName.getText().toString())) {
                         Toast.makeText(this, "Cannot use the same name", Toast.LENGTH_SHORT).show();

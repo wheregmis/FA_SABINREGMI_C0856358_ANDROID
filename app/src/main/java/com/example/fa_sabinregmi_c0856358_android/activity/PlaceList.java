@@ -39,7 +39,7 @@ public class PlaceList extends AppCompatActivity {
 
     void initializeToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitle("Bookmarked Places");
+        toolbar.setTitle("Saved Places");
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);

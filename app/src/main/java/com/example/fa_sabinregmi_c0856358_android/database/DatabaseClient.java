@@ -25,7 +25,7 @@ public class DatabaseClient {
         return mInstance;
     }
 
-    public ApplicationDatabase getApplicationDatabaseDatabase() {
+    public ApplicationDatabase getApplicationDatabase() {
         return applicationDatabase;
     }
 }
