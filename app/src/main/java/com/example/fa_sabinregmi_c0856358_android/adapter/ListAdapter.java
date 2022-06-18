@@ -12,8 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import com.example.fa_sabinregmi_c0856358_android.R;
+import com.example.fa_sabinregmi_c0856358_android.activity.EditPlace;
 import com.example.fa_sabinregmi_c0856358_android.database.DatabaseClient;
 import com.example.fa_sabinregmi_c0856358_android.model.Place;
 
@@ -69,8 +69,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.MyViewHolder> 
         }
 
         holder.rlMain.setOnClickListener(view -> {
-            // TODO: 18/06/2022
-            // to make edit places view
+            Intent i = new Intent(context, EditPlace.class);
+            i.putExtra("id", place.getId());
+            context.startActivity(i);
         });
     }
 
@@ -80,7 +81,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.MyViewHolder> 
     }
 
     public void removeItem(int position) {
-        DatabaseClient.getInstance(context).getApplicationDatabaseDatabase().placeDao().delete(placeList.get(position));
+        DatabaseClient.getInstance(context).getApplicationDatabase().placeDao().delete(placeList.get(position));
         placeList.remove(position);
         notifyItemRemoved(position);
     }

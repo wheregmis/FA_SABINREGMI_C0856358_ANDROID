@@ -1,18 +1,23 @@
 package com.example.fa_sabinregmi_c0856358_android.activity;
 
-
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -30,14 +35,21 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.button.MaterialButton;
 
+import java.text.DecimalFormat;
 import java.util.Calendar;
+import java.util.List;
 
-public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback {
-
+public class EditPlace extends AppCompatActivity implements OnMapReadyCallback {
     // defining variables
     EditText etName;
     MaterialButton btnAdd;
@@ -48,25 +60,43 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap mMap = null;
 
     // initializing Place Model
-    Place place = new Place();
+    Place place = null;
+    private PlaceDao placeDao;
+
+    LocationRequest mLocationRequest;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
 
-        //calling initialize method to initialize layout components
+        // getting place model from database when id was placed
+        placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
+
+        place = placeDao.getProductById(getIntent().getIntExtra("id", 0));
         initialize();
     }
 
     // method to initialize toolbar
     void initializeToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitle("Add Place");
+        toolbar.setTitle(place.getName());
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @SuppressLint("MissingPermission")
+    public void checkPermissionAndEnableLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            //TODO
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        startLocationUpdates();
     }
 
     @Override
@@ -76,7 +106,6 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
     }
 
     void initialize() {
-
         // initializing toolbar
         initializeToolbar();
 
@@ -86,23 +115,22 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
         cvFav = findViewById(R.id.cv_isFav);
         cvComp = findViewById(R.id.cv_isCompleted);
 
+        btnAdd.setText("Update Location");
+
+        etName.setText(place.getName());
+        cvFav.setChecked(place.getFav());
+        cvComp.setChecked(place.getVisited());
+
         // setting up map
         setUpMap();
 
         // setting up click listener to add button
         btnAdd.setOnClickListener(view -> {
+
             if (!etName.getText().toString().contentEquals("")) {
 
                 // getting place dao
                 PlaceDao placeDao = DatabaseClient.getInstance(getApplicationContext()).getApplicationDatabase().placeDao();
-
-                // validating place name
-                for (Place place1 : placeDao.getAllPlaces()) {
-                    if (place1.getName().contentEquals(etName.getText().toString())) {
-                        Toast.makeText(this, "Cannot use the same name", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
 
                 // checking lat long if its null or not
                 if (place.getLatitude() != null && place.getLatitude() != null) {
@@ -120,9 +148,10 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
                     } else {
                         place.setFav(false);
                     }
+                    // updating place in database
+                    placeDao.update(place);
 
-                    // inserting place in database
-                    placeDao.insert(place);
+
 
                     Toast.makeText(this, "Place has been added", Toast.LENGTH_SHORT).show();
                     finish();
@@ -141,32 +170,21 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.clear();
-        enableLocation();
 
-        // if intent have values (opened from long press on map)
-        if (getIntent() != null) {
-            LatLng selectedLatLng = new LatLng(getIntent().getDoubleExtra("lan", -34), getIntent().getDoubleExtra("long", -151));
-            mMap.addMarker(new MarkerOptions()
-                    .position(selectedLatLng)
-                    .title("Selected Location")).setDraggable(true);
+        checkPermissionAndEnableLocation();
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLatLng, 12));
-        } else {
-            // if intent doesnt have value
-            LatLng selectedLatLng = new LatLng(-34, 151);
-            mMap.addMarker(new MarkerOptions()
-                    .position(selectedLatLng)
-                    .title("Selected Location")).setDraggable(true);
+        LatLng placeLatLng = new LatLng(place.getLatitude(), place.getLongitude());
+        mMap.addMarker(new MarkerOptions()
+                .position(placeLatLng)
+                .title(place.getName())).setDraggable(true);
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLatLng, 12));
-        }
-
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeLatLng, 11));
 
         // setting up click listener to place marker in mapview
         mMap.setOnMapClickListener(latLng -> {
@@ -176,27 +194,33 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
             place.setLongitude((float) current1.longitude);
             googleMap.addMarker(new MarkerOptions()
                     .position(current1)
-                    .title("Selected Location"));
+                    .title(place.getName())).setDraggable(true);
         });
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                googleMap.clear();
+                LatLng current1 = new LatLng(marker.getPosition().latitude, marker.getPosition().latitude);
+                place.setLatitude((float) current1.latitude);
+                place.setLongitude((float) current1.longitude);
+                googleMap.addMarker(new MarkerOptions()
+                        .position(current1)
+                        .title(place.getName())).setDraggable(true);
+            }
+
+            @Override
+            public void onMarkerDrag(Marker marker) {
+
+            }
+        });
+
     }
-
-    private FusedLocationProviderClient fusedLocationClient;
-
-    @SuppressLint("MissingPermission")
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void enableLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            //TODO
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-        startLocationUpdates();
-    }
-
-    LocationRequest mLocationRequest;
-    private double latitude, longitude;
-
 
     // method to handle permission and update user location
     @SuppressLint("MissingPermission")
@@ -204,7 +228,6 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
 
         // Create the location request
         mLocationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(2000)
                 .setFastestInterval(2000);
         if (ActivityCompat.checkSelfPermission(getApplicationContext(),
@@ -228,9 +251,10 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
                     if (fusedLocationClient != null) {
                         if (location != null) {
                             mMap.setOnMapLoadedCallback(() -> {
+                                checkPermissionAndEnableLocation();
+                                LatLng source = new LatLng(location.getLatitude(), location.getLongitude());
+                                drawLine(source, new LatLng(place.getLatitude(), place.getLongitude()));
 
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
                                 fusedLocationClient.removeLocationUpdates(mLocationCallback);
                             });
 
@@ -241,5 +265,69 @@ public class AddNewPlace extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
-}
+    // method to draw line between place location and user location
+    private void drawLine(LatLng source, LatLng destination) {
+        PolylineOptions options1 = new PolylineOptions()
+                .color(Color.BLUE)
+                .width(10)
+                .add(source, destination);
+        options1.clickable(true);
+        options1.zIndex(2F);
+        Polyline p = mMap.addPolyline(options1);
+        List<LatLng> test = p.getPoints();
+        float[] results = new float[1];
+        Location.distanceBetween(test.get(0).latitude, test.get(0).longitude,
+                test.get(1).latitude, test.get(1).longitude,
+                results);
 
+        // calculate midpoint of polyline
+        LatLng centerLatLng = null;
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for(int i = 0 ; i < p.getPoints().size() ; i++)
+        {
+            builder.include(p.getPoints().get(i));
+        }
+        LatLngBounds bounds = builder.build();
+        centerLatLng =  bounds.getCenter();
+
+        setMarkerInCoordinate(centerLatLng, results[0]);
+
+
+    }
+
+    // method to set marker in the co ordinate
+    private void setMarkerInCoordinate(LatLng latLng, Float distance){
+        Log.i("MapsActivity", "setMarkerInCoordinate: "+latLng);
+        DecimalFormat df = new DecimalFormat("#.##");
+        MarkerOptions options = new MarkerOptions().position(latLng)
+                .title("")
+                .icon(createPureTextIcon(String.valueOf(df.format(distance/1000))+" KM"));
+        mMap.addMarker(options);
+    }
+
+    // method to create icon from string
+    public BitmapDescriptor createPureTextIcon(String text) {
+
+        Paint textPaint = new Paint(); // Adapt to your needs
+        textPaint.setTextSize(50);
+        float textWidth = textPaint.measureText(text);
+        float textHeight = textPaint.getTextSize();
+        int width = (int) (textWidth);
+        int height = (int) (textHeight);
+
+        Bitmap image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+
+        canvas.translate(0, height);
+
+        // For development only:
+        // Set a background in order to see the
+        // full size and positioning of the bitmap.
+        // Remove that for a fully transparent icon.
+        canvas.drawColor(Color.LTGRAY);
+
+        canvas.drawText(text, 0, 0, textPaint);
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(image);
+        return icon;
+    }
+}
